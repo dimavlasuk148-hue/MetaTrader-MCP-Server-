@@ -1,0 +1,65 @@
+# Trading AI Pipeline — Default Configuration
+# All values here are overridable via environment variables.
+# See core/config/settings.py for the full list.
+
+dry_run: true                        # Set to false for live trading
+pipeline_interval_seconds: 60        # Run every 60 seconds
+
+mt5:
+  host: "127.0.0.1"
+  port: 18812
+  timeout_ms: 10000
+  # login, password, server — set via env: MT5_LOGIN, MT5_PASSWORD, MT5_SERVER
+
+ai:
+  provider: "ollama"                 # ollama | openai | deepseek | qwen | anthropic
+  model: "qwen2.5:14b"
+  base_url: "http://localhost:11434"
+  temperature: 0.1
+  max_tokens: 2048
+  timeout_seconds: 60
+  retry_attempts: 3
+  # api_key — set via env: PIPELINE_AI_API_KEY
+
+symbol:
+  symbol: "EURUSD"
+  timeframe: "H1"
+  secondary_timeframe: "H4"
+  bars_required: 200
+
+risk:
+  risk_percent: 1.0                  # % of account balance per trade
+  max_spread_points: 20
+  min_rr_ratio: 1.5
+  atr_sl_multiplier: 1.5
+  atr_tp_multiplier: 2.5
+  max_lots: 10.0
+  min_lots: 0.01
+
+rules:
+  max_daily_trades: 5
+  max_daily_loss_percent: 3.0
+  max_drawdown_percent: 10.0
+  news_blackout_minutes: 30
+  allow_duplicate_positions: false
+
+consensus:
+  min_confidence: 0.55
+  min_agent_agreement: 2
+  technical_weight: 0.35
+  price_action_weight: 0.30
+  smart_money_weight: 0.35
+
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  max_file_size_mb: 50
+  backup_count: 7
+  log_agent_prompts: true
+  log_agent_responses: true
+
+memory:
+  enabled: true
+  storage_path: "data/memory"
+  max_history_entries: 1000
+  persist_format: "jsonl"
