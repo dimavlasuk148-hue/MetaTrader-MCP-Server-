@@ -29,49 +29,63 @@ Use in Claude Desktop: Add MCP server endpoint to config.
 
 ---
 
-## Option 2: Run AI Trading Pipeline (Automated Trading System)
+## Option 2: Run AI Trading Pipeline (100% FREE AI - Automated Trading System)
 
-### Prerequisites (One-Time)
+### Choose Your FREE AI Provider (Pick ONE)
+
+#### Option 2A: Ollama (Recommended - LOCAL & 100% FREE)
 ```bash
-# 1. Install Ollama from https://ollama.ai
-# That's it! No manual configuration needed.
+# 1. Download: https://ollama.ai
+# 2. Install and run:
+ollama serve
 
-# Verify installation
-ollama --version
+# That's it! System auto-detects. No setup needed.
 ```
 
-### Setup (Fully Automatic)
+#### Option 2B: Groq (FREE Cloud - 30k tokens/min)
 ```bash
-# Install pipeline dependencies
+# 1. Signup: https://console.groq.com (no credit card)
+# 2. Get API key
+# 3. Set environment variable:
+export GROQ_API_KEY="gsk_xxx"
+
+# Or add to .env
+echo "GROQ_API_KEY=gsk_xxx" >> .env
+```
+
+#### Option 2C: Together AI (FREE Cloud - \$1 credit/month)
+```bash
+# 1. Signup: https://www.together.ai (no credit card)
+# 2. Get API key
+# 3. Set environment variable:
+export TOGETHER_API_KEY="xxx"
+```
+
+### Setup (5 minutes - Fully Automatic)
+```bash
+# 1. Install dependencies
 pip install -e .
 
-# Copy example configuration
+# 2. Copy example configuration
 cp config/pipeline.yaml.example config/pipeline.yaml
 
-# Edit with your MT5 credentials only (everything else is automatic)
+# 3. Edit with your MT5 credentials ONLY (everything else is automatic)
 cat > config/pipeline.yaml << 'EOF'
 mt5:
   login: 12345678
   password: "your_password"
   server: "MetaQuotes-Demo"
 
-ai:
-  provider: "ollama"  # Automatic: discovers, launches, and pulls model
-  model: "qwen2.5:14b"
-  auto_launch: true   # Automatically starts Ollama if closed
-  auto_pull_model: true  # Automatically downloads model if missing
-
-dry_run: true  # true = no real orders; false = live trading
+dry_run: true  # true = paper trade; false = live
 EOF
 ```
 
 **That's all. Everything else happens automatically:**
-- ✅ Ollama is detected/launched
-- ✅ Model is downloaded if needed
-- ✅ MT5 is launched if closed
+- ✅ FREE AI provider detected/launched
+- ✅ MT5 auto-launched if closed
 - ✅ Trading pipeline starts
 
-### Run (Everything Automatic)
+### Run (Everything Automatic - 100% FREE)
 
 **Windows:**
 ```powershell
@@ -84,27 +98,33 @@ EOF
 ```
 
 **What happens automatically:**
-1. System checks if Ollama is running
-2. If not, launches Ollama automatically
-3. If model not found, downloads it automatically
-4. Checks if MT5 is running
-5. If not, launches MT5 automatically
-6. Connects and starts trading analysis loop
+1. System detects available FREE AI providers (Ollama, Groq, Together, HF)
+2. Launches Ollama if you're using local (and it's installed)
+3. Verifies API keys for cloud providers
+4. Selects best provider (prefers local Ollama first)
+5. Launches MT5 if closed
+6. Starts trading analysis loop
 
 **Output:**
 ```
-[*] Checking Ollama availability...
-[+] Ollama is running
-[+] Model qwen2.5:14b is available
-[*] Connecting to MT5...
-[+] Connected to MT5 account
-[*] Pipeline runner started [DRY-RUN]
-[+] Analysis cycle 1: EURUSD H1 - NO_TRADE (3.2s)
-[+] Analysis cycle 2: EURUSD H1 - BUY signal (confidence: 0.78)
-...
+======================================================================
+AUTOMATED FREE AI PROVIDER DETECTION & SETUP
+======================================================================
+
+[+] Successfully initialized 1 FREE provider(s):
+    ✓ ollama
+
+[+] Primary provider: OLLAMA
+
+[*] Setting up MetaTrader 5 connection...
+[+] Connected to MT5
+
+======================================================================
+STARTING TRADING PIPELINE (FREE AI MODE)
+======================================================================
 ```
 
-No IP addresses, no manual setup. Just run and it works.
+**Cost: $0 - Completely FREE**
 
 ---
 
@@ -155,32 +175,45 @@ ollama serve
 
 ## Troubleshooting
 
-### "Ollama executable not found"
-1. Download Ollama from https://ollama.ai
-2. Install it
-3. Restart terminal/PowerShell
-4. Try again
+### "No FREE AI providers found"
+Choose one and setup (5 min):
+- **Ollama:** https://ollama.ai (then `ollama serve`)
+- **Groq:** https://console.groq.com (then `export GROQ_API_KEY=...`)
+- **Together:** https://www.together.ai (then `export TOGETHER_API_KEY=...`)
 
-### "Ollama did not become responsive"
-1. Check if Ollama is already running: `ollama list`
-2. If frozen, restart: Kill `ollama.exe` and try again
-3. Check disk space: `ollama` needs 5GB+ for models
-
-### "Model not found"
-Auto-pull should handle it, but you can manually:
+### Ollama not detected
 ```bash
-ollama pull qwen2.5:14b
+# Check if running
+ollama list
+
+# If not running, start it
+ollama serve
+
+# Wait 5 seconds for system to detect
+```
+
+### API key not working
+```bash
+# Check it's set
+echo $GROQ_API_KEY  # Should print your key
+
+# Verify format (Groq starts with gsk_)
+# Get new key: https://console.groq.com/keys
 ```
 
 ### "No trades are being generated"
-Check the analysis logs:
+Check logs:
 ```bash
-# Live logs (Windows)
+# Windows
 Get-Content logs/pipeline/*.jsonl -Wait
 
-# Or check latest analysis
-cat logs/pipeline/latest.jsonl | Select-String "confidence"
+# Linux/Mac
+tail -f logs/pipeline/*.jsonl
 ```
+
+## More Help
+
+See [FREE_AI_PROVIDERS.md](../docs/FREE_AI_PROVIDERS.md) for detailed provider setup and comparison.
 
 ---
 
