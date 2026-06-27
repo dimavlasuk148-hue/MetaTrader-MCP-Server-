@@ -56,6 +56,7 @@ class MT5Connection:
                 - max_retries (int): Maximum number of connection retries (default: 3).
                 - backoff_factor (float): Backoff factor for retry delays (default: 1.5).
                 - cooldown_time (float): Cooldown time between connections in seconds (default: 2.0).
+                - auto_launch (bool): Auto-launch MT5 terminal if not running (default: True).
         """
         self.config = config
         self.path = config.get("path")
@@ -68,6 +69,7 @@ class MT5Connection:
         self.max_retries = config.get("max_retries", 3)
         self.backoff_factor = config.get("backoff_factor", 1.5)
         self.cooldown_time = config.get("cooldown_time", 2.0)
+        self.auto_launch = config.get("auto_launch", True)
         self._connected = False
         self._last_connection_time = 0
         

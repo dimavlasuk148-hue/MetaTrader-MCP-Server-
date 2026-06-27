@@ -1,6 +1,8 @@
 def _initialize_terminal(connection):
     """
     Initialize the MetaTrader 5 terminal.
+    Auto-launches MT5 if it's not running (can be disabled via config).
+    
     Returns:
         bool: True if successful, False otherwise.
     Raises:
@@ -14,6 +16,18 @@ def _initialize_terminal(connection):
     import MetaTrader5 as mt5
     from ._find_terminal_path import _find_terminal_path
     from ._ensure_cooldown import _ensure_cooldown
+    from ._process_manager import ensure_mt5_running
+    
+    # Auto-launch MT5 if configured
+    auto_launch = getattr(connection, 'auto_launch', True)
+    if auto_launch:
+        success, error_msg = ensure_mt5_running(terminal_path=connection.path)
+        if not success:
+            logger.warning(f"MT5 auto-launch failed: {error_msg}")
+            # Continue anyway - maybe terminal will start via other means
+        else:
+            logger.info("MT5 terminal is running")
+    
     _ensure_cooldown(connection)
     if mt5.terminal_info() is not None:
         logger.debug("Terminal is already initialized")

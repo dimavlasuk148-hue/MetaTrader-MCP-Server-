@@ -3,6 +3,7 @@ from ._ensure_cooldown import _ensure_cooldown
 from ._initialize_terminal import _initialize_terminal
 from ._login import _login
 from ._get_last_error import _get_last_error
+from ._process_manager import ensure_mt5_running
 from .connect import connect
 from .disconnect import disconnect
 from .is_connected import is_connected
@@ -15,6 +16,7 @@ __all__ = [
     '_initialize_terminal',
     '_login',
     '_get_last_error',
+    'ensure_mt5_running',
     'connect',
     'disconnect',
     'is_connected',
