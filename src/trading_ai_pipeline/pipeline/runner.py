@@ -13,7 +13,11 @@ from typing import Optional
 
 from trading_ai_pipeline.core.config.settings import PipelineConfig, load_config
 from trading_ai_pipeline.core.types.pipeline_context import PipelineStatus
-from trading_ai_pipeline.core.ai_providers_manager import get_ai_provider_manager, get_all_ai_providers
+from trading_ai_pipeline.core.free_ai_providers import (
+    get_free_ai_manager,
+    get_active_free_provider,
+    get_all_free_providers,
+)
 from trading_ai_pipeline.logger.pipeline_logger import PipelineLogger
 from trading_ai_pipeline.memory.trade_memory import TradeMemory
 from trading_ai_pipeline.pipeline.orchestrator import PipelineOrchestrator
@@ -124,28 +128,42 @@ class PipelineRunner:
 async def main(config_path: Optional[str] = None) -> None:
     config = load_config(config_path)
 
-    # ---- Auto-setup ALL 5 AI providers ----
+    # ---- Auto-setup FREE AI providers ----
     print("\n" + "="*70)
-    print("AUTOMATED AI PROVIDER DETECTION & SETUP")
+    print("AUTOMATED FREE AI PROVIDER DETECTION & SETUP")
     print("="*70 + "\n")
 
     try:
-        ai_manager = await get_ai_provider_manager()
-        available = get_all_ai_providers()
+        ai_manager = await get_free_ai_manager()
+        available = get_all_free_providers()
 
-        print(f"[+] Successfully initialized {len(available)} AI provider(s):")
+        if not available:
+            print("[!] No FREE AI providers found!")
+            print("\n[*] Quick setup options:")
+            print("  1. OLLAMA (Local, 100% FREE):")
+            print("     - Download: https://ollama.ai")
+            print("     - Install and run: ollama serve")
+            print("\n  2. GROQ (FREE tier, 30k tokens/min):")
+            print("     - Signup: https://console.groq.com")
+            print("     - Get API key and set: export GROQ_API_KEY=xxx")
+            print("\n  3. TOGETHER AI (FREE tier with $1 credit/month):")
+            print("     - Signup: https://www.together.ai")
+            print("     - Get API key and set: export TOGETHER_API_KEY=xxx")
+            print("\n  4. HuggingFace (FREE tier, rate limited):")
+            print("     - Signup: https://huggingface.co")
+            print("     - Get API key and set: export HUGGINGFACE_API_KEY=xxx")
+            return
+
+        print(f"[+] Successfully initialized {len(available)} FREE provider(s):")
         for provider in available:
-            print(f"    ✓ {provider}")
+            print(f"    ✓ {provider.upper()}")
 
-        active = ai_manager.active_provider
+        active = get_active_free_provider()
         print(f"\n[+] Primary provider: {active.upper()}")
         print("="*70 + "\n")
 
     except Exception as e:
-        print(f"[!] ERROR setting up AI providers: {e}")
-        print("[!] Make sure:")
-        print("    - Ollama is installed (https://ollama.ai)")
-        print("    - Environment variables are set for cloud APIs (OPENAI_API_KEY, etc)")
+        print(f"[!] ERROR setting up FREE AI providers: {e}")
         return
 
     # ---- Auto-setup MT5 ----
@@ -179,7 +197,7 @@ async def main(config_path: Optional[str] = None) -> None:
 
     # ---- Start Pipeline ----
     print("\n" + "="*70)
-    print("STARTING TRADING PIPELINE")
+    print("STARTING TRADING PIPELINE (FREE AI MODE)")
     print("="*70 + "\n")
 
     runner = PipelineRunner(config=config, mt5_client=mt5_client)
