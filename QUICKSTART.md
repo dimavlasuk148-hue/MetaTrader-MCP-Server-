@@ -31,68 +31,80 @@ Use in Claude Desktop: Add MCP server endpoint to config.
 
 ## Option 2: Run AI Trading Pipeline (Automated Trading System)
 
-### Setup
+### Prerequisites (One-Time)
+```bash
+# 1. Install Ollama from https://ollama.ai
+# That's it! No manual configuration needed.
+
+# Verify installation
+ollama --version
+```
+
+### Setup (Fully Automatic)
 ```bash
 # Install pipeline dependencies
-pip install pydantic pyyaml anthropic ollama requests pandas numpy
+pip install -e .
 
-# Create config/pipeline.yaml
+# Copy example configuration
+cp config/pipeline.yaml.example config/pipeline.yaml
+
+# Edit with your MT5 credentials only (everything else is automatic)
 cat > config/pipeline.yaml << 'EOF'
-# AI Provider
-ai_provider: "ollama"  # or: openai, anthropic, deepseek, qwen
-ai_model: "qwen:7b"
+mt5:
+  login: 12345678
+  password: "your_password"
+  server: "MetaQuotes-Demo"
 
-# MT5 Connection (auto-launches if needed)
-mt5_login: 12345678
-mt5_password: "your_password"
-mt5_server: "MetaQuotes-Demo"
-auto_launch: true  # Auto-start MT5 if closed
+ai:
+  provider: "ollama"  # Automatic: discovers, launches, and pulls model
+  model: "qwen2.5:14b"
+  auto_launch: true   # Automatically starts Ollama if closed
+  auto_pull_model: true  # Automatically downloads model if missing
 
-# Trading Mode
 dry_run: true  # true = no real orders; false = live trading
-
-# Risk Management
-max_daily_loss_percent: 2.0
-max_position_size_percent: 1.0
-min_rr_ratio: 2.0
-
-# AI Agents
-technical_confidence_threshold: 0.6
-price_action_confidence_threshold: 0.6
-smart_money_confidence_threshold: 0.6
-consensus_threshold: 0.65
 EOF
 ```
 
-### Run Single Analysis
-```bash
-python << 'EOF'
-import asyncio
-from src.trading_ai_pipeline.pipeline.orchestrator import PipelineOrchestrator
-from src.trading_ai_pipeline.core.config.settings import PipelineConfig
+**That's all. Everything else happens automatically:**
+- ✅ Ollama is detected/launched
+- ✅ Model is downloaded if needed
+- ✅ MT5 is launched if closed
+- ✅ Trading pipeline starts
 
-async def run_single_analysis():
-    config = PipelineConfig.load_from_yaml('config/pipeline.yaml')
-    orchestrator = PipelineOrchestrator(config)
-    result = await orchestrator.run(
-        symbol='EURUSD',
-        timeframe='H1',
-        run_id='test_001'
-    )
-    print(result)
+### Run (Everything Automatic)
 
-asyncio.run(run_single_analysis())
-EOF
+**Windows:**
+```powershell
+.\run.ps1 -Mode pipeline
 ```
 
-### Run Continuous Trading (Recommended)
+**Linux/Mac:**
 ```bash
-python -m trading_ai_pipeline.pipeline.runner \
-  --config config/pipeline.yaml \
-  --symbol EURUSD \
-  --timeframe H1 \
-  --interval 3600  # Run every hour
+./run.sh pipeline
 ```
+
+**What happens automatically:**
+1. System checks if Ollama is running
+2. If not, launches Ollama automatically
+3. If model not found, downloads it automatically
+4. Checks if MT5 is running
+5. If not, launches MT5 automatically
+6. Connects and starts trading analysis loop
+
+**Output:**
+```
+[*] Checking Ollama availability...
+[+] Ollama is running
+[+] Model qwen2.5:14b is available
+[*] Connecting to MT5...
+[+] Connected to MT5 account
+[*] Pipeline runner started [DRY-RUN]
+[+] Analysis cycle 1: EURUSD H1 - NO_TRADE (3.2s)
+[+] Analysis cycle 2: EURUSD H1 - BUY signal (confidence: 0.78)
+...
+```
+
+No IP addresses, no manual setup. Just run and it works.
 
 ---
 
@@ -116,80 +128,58 @@ python -m trading_ai_pipeline.pipeline.runner \
 
 ---
 
-## Available Commands
+## Quick Commands
 
-### MCP Server Commands
 ```bash
-# SSE transport (default)
-metatrader-mcp-server --login 12345678 --password pwd --server demo
+# Run Trading Pipeline (automatic Ollama + MT5)
+.\run.ps1 -Mode pipeline
 
-# Stdio transport (Claude Desktop)
-metatrader-mcp-server --login 12345678 --password pwd --server demo --transport stdio
+# Run MCP Server (for Claude Desktop)
+.\run.ps1 -Mode mcp
 
-# Custom host/port
-metatrader-mcp-server --login 12345678 --password pwd --server demo --host 127.0.0.1 --port 9000
+# Run Both simultaneously
+.\run.ps1 -Mode both
 
-# HTTP API Server (separate)
-metatrader-http-server --login 12345678 --password pwd --server demo
+# Check Ollama models
+ollama list
 
-# Real-time Quote WebSocket (separate)
-metatrader-quote-server --login 12345678 --password pwd --server demo
-```
+# Download a model
+ollama pull mistral
+ollama pull llama2
 
-### Trading Pipeline Commands
-```bash
-# Dry-run mode (test without real trades)
-python -m trading_ai_pipeline.pipeline.runner \
-  --config config/pipeline.yaml \
-  --symbol EURUSD \
-  --timeframe H1 \
-  --dry-run
-
-# Live trading
-python -m trading_ai_pipeline.pipeline.runner \
-  --config config/pipeline.yaml \
-  --symbol EURUSD \
-  --timeframe H1 \
-  --live
-
-# Custom interval (minutes)
-python -m trading_ai_pipeline.pipeline.runner \
-  --config config/pipeline.yaml \
-  --symbol EURUSD \
-  --timeframe H1 \
-  --interval 1800  # Every 30 minutes
+# Manual Ollama start (if auto-launch disabled)
+ollama serve
 ```
 
 ---
 
 ## Troubleshooting
 
-### MT5 Auto-Launch Not Working
-```yaml
-# Disable auto-launch and start MT5 manually
-auto_launch: false
+### "Ollama executable not found"
+1. Download Ollama from https://ollama.ai
+2. Install it
+3. Restart terminal/PowerShell
+4. Try again
 
-# Or specify exact MT5 path
-mt5_path: "C:\\Program Files\\MetaTrader 5\\terminal.exe"
+### "Ollama did not become responsive"
+1. Check if Ollama is already running: `ollama list`
+2. If frozen, restart: Kill `ollama.exe` and try again
+3. Check disk space: `ollama` needs 5GB+ for models
+
+### "Model not found"
+Auto-pull should handle it, but you can manually:
+```bash
+ollama pull qwen2.5:14b
 ```
 
-### AI Provider Connection Failed
+### "No trades are being generated"
+Check the analysis logs:
 ```bash
-# For Ollama: Start local server
-ollama serve
+# Live logs (Windows)
+Get-Content logs/pipeline/*.jsonl -Wait
 
-# For OpenAI: Set API key
-export OPENAI_API_KEY="sk-..."
-
-# For Anthropic (Claude): Set API key
-export ANTHROPIC_API_KEY="sk-ant-..."
-```
-
-### No Trades Generated
-Check logs:
-```bash
-cat logs/pipeline/latest.jsonl
-tail -f logs/trade_memory.jsonl
+# Or check latest analysis
+cat logs/pipeline/latest.jsonl | Select-String "confidence"
 ```
 
 ---

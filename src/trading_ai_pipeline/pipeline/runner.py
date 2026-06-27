@@ -13,6 +13,7 @@ from typing import Optional
 
 from trading_ai_pipeline.core.config.settings import PipelineConfig, load_config
 from trading_ai_pipeline.core.types.pipeline_context import PipelineStatus
+from trading_ai_pipeline.core.ollama_manager import ensure_ollama_running, ensure_model_available
 from trading_ai_pipeline.logger.pipeline_logger import PipelineLogger
 from trading_ai_pipeline.memory.trade_memory import TradeMemory
 from trading_ai_pipeline.pipeline.orchestrator import PipelineOrchestrator
@@ -123,7 +124,32 @@ class PipelineRunner:
 async def main(config_path: Optional[str] = None) -> None:
     config = load_config(config_path)
 
-    # Import MT5 client from the existing package
+    # ---- Auto-setup Ollama (if using local Ollama) ----
+    if config.ai.provider == "ollama":
+        print("[*] Checking Ollama availability...")
+        success, msg = ensure_ollama_running(
+            base_url=config.ai.base_url,
+            auto_launch=config.ai.auto_launch,
+        )
+        if not success:
+            print(f"[!] ERROR: {msg}")
+            print("[!] Please install Ollama from https://ollama.ai")
+            return
+        print(f"[+] {msg}")
+
+        # Auto-pull model if needed
+        success, msg = ensure_model_available(
+            model=config.ai.model,
+            base_url=config.ai.base_url,
+            auto_pull=config.ai.auto_pull_model,
+        )
+        if not success:
+            print(f"[!] WARNING: {msg}")
+            print(f"[!] To manually pull model: ollama pull {config.ai.model}")
+        else:
+            print(f"[+] {msg}")
+
+    # ---- Import and setup MT5 client ----
     from metatrader_client import MetaTraderClient
     from metatrader_client.connection.config import ConnectionConfig
 

@@ -36,6 +36,8 @@ class AIProviderConfig(BaseModel):
     max_tokens: int = 2048
     timeout_seconds: int = 60
     retry_attempts: int = 3
+    auto_launch: bool = True          # Auto-launch Ollama if needed
+    auto_pull_model: bool = True      # Auto-pull model if not available
 
 
 class SymbolConfig(BaseModel):
