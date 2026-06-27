@@ -1,0 +1,269 @@
+################################################################
+# Trading AI Pipeline Configuration
+# Copy this file to pipeline.yaml and customize for your needs
+################################################################
+
+# ════════════════════════════════════════════════════════════
+# AI PROVIDER CONFIGURATION
+# ════════════════════════════════════════════════════════════
+
+# Choose AI provider: ollama, openai, anthropic, deepseek, qwen
+ai_provider: "ollama"
+
+# Model selection (depends on provider)
+# Ollama:      qwen:7b, llama2, mistral, neural-chat, etc.
+# OpenAI:      gpt-4, gpt-4-turbo, gpt-3.5-turbo
+# Anthropic:   claude-opus-4, claude-opus, claude-sonnet
+# DeepSeek:    deepseek-coder, deepseek-chat
+# Qwen:        qwen:7b, qwen:14b, qwen:72b
+ai_model: "qwen:7b"
+
+# API key (if using OpenAI/Anthropic/DeepSeek)
+# Can be set via environment variable instead
+api_key: ""
+
+# API endpoint for custom deployments
+api_endpoint: ""
+
+# Temperature for AI responses (0.0-1.0)
+# Lower = more deterministic, Higher = more creative
+temperature: 0.7
+
+# Max tokens for AI response
+max_tokens: 2000
+
+# Retry attempts for AI calls
+ai_retry_attempts: 3
+ai_retry_delay: 2  # seconds
+
+
+# ════════════════════════════════════════════════════════════
+# METATRADER 5 CONNECTION
+# ════════════════════════════════════════════════════════════
+
+# MT5 Account
+mt5_login: 12345678
+mt5_password: "your_password"
+mt5_server: "MetaQuotes-Demo"
+
+# MT5 Path (leave empty to auto-detect)
+mt5_path: ""
+
+# Auto-launch MT5 if closed
+auto_launch: true
+
+# Connection timeout (milliseconds)
+connection_timeout: 60000
+
+
+# ════════════════════════════════════════════════════════════
+# TRADING MODE
+# ════════════════════════════════════════════════════════════
+
+# Dry-run mode: true = no real orders, false = live trading
+dry_run: true
+
+# Symbols and timeframes to trade
+# Can be overridden via CLI
+symbols:
+  - EURUSD
+  - GBPUSD
+
+timeframes:
+  - H1
+  - H4
+
+# Session filter (only trade during specified hours UTC)
+trading_session_start: "08:00"  # Start trading at 8 AM UTC
+trading_session_end: "20:00"    # Stop trading at 8 PM UTC
+respect_session_filter: true
+
+
+# ════════════════════════════════════════════════════════════
+# RISK MANAGEMENT
+# ════════════════════════════════════════════════════════════
+
+# Position sizing
+position_size_method: "fixed"  # fixed, kelly, volatility
+fixed_position_size: 0.1  # 0.1 lot per trade
+max_position_size_lots: 1.0
+
+# Loss limits
+max_daily_loss_percent: 2.0      # Stop trading if daily loss exceeds 2%
+max_weekly_loss_percent: 5.0     # Stop trading if weekly loss exceeds 5%
+max_account_drawdown_percent: 10.0  # Stop trading if drawdown > 10%
+
+# Profit taking
+daily_profit_target_percent: 5.0  # Close all trades if daily profit > 5%
+
+# Risk/Reward ratio
+min_rr_ratio: 2.0  # Minimum 1:2 risk/reward
+max_rr_ratio: 5.0  # Maximum 1:5 risk/reward
+
+# Stop loss settings
+sl_method: "atr"      # atr, fixed, percent
+sl_atr_multiplier: 2.0  # SL = 2 * ATR
+sl_fixed_pips: 50     # Fixed SL distance
+sl_percent: 1.0       # SL as % of entry
+
+# Take profit settings
+tp_method: "rr_ratio"  # rr_ratio, fixed, percent
+tp_rr_ratio: 2.0      # TP = 2 * risk
+tp_fixed_pips: 100    # Fixed TP distance
+tp_percent: 2.0       # TP as % of entry
+
+# Spread tolerance
+max_spread_points: 3  # Skip trade if spread > 3 points
+
+
+# ════════════════════════════════════════════════════════════
+# AI AGENT CONFIDENCE THRESHOLDS
+# ════════════════════════════════════════════════════════════
+
+# Individual agent confidence requirements
+technical_confidence_threshold: 0.60
+price_action_confidence_threshold: 0.60
+smart_money_confidence_threshold: 0.60
+
+# Consensus threshold (0-1)
+# How many agents must agree?
+consensus_threshold: 0.65  # At least 65% consensus
+
+# Reviewer veto probability
+reviewer_veto_probability: 0.15  # 15% chance reviewer says no
+
+# Probability estimator threshold
+buy_sell_probability_threshold: 0.55  # Must be > 55% confident
+
+
+# ════════════════════════════════════════════════════════════
+# LOGGING & MONITORING
+# ════════════════════════════════════════════════════════════
+
+# Log level: DEBUG, INFO, WARNING, ERROR
+log_level: "INFO"
+
+# Log directory
+log_dir: "logs"
+
+# Save per-run JSONL logs
+save_run_logs: true
+
+# Save trade memory (JSONL format)
+save_trade_memory: true
+
+# Print to console
+console_output: true
+
+# Verbose mode (show all intermediate decisions)
+verbose: false
+
+
+# ════════════════════════════════════════════════════════════
+# TECHNICAL ANALYSIS PARAMETERS
+# ════════════════════════════════════════════════════════════
+
+# EMA periods
+ema_fast: 20
+ema_mid: 50
+ema_slow: 200
+
+# RSI settings
+rsi_period: 14
+rsi_overbought: 70
+rsi_oversold: 30
+
+# MACD settings
+macd_fast: 12
+macd_slow: 26
+macd_signal: 9
+
+# ATR settings
+atr_period: 14
+
+# ADX settings
+adx_period: 14
+adx_trend_threshold: 25
+
+# Bollinger Bands
+bb_period: 20
+bb_std_dev: 2
+
+# VWAP settings
+vwap_enabled: true
+
+# Volume settings
+min_volume_threshold: 100  # Minimum volume to trade
+
+
+# ════════════════════════════════════════════════════════════
+# PRICE ACTION PARAMETERS
+# ════════════════════════════════════════════════════════════
+
+# Support/Resistance detection
+sr_lookback: 50  # Bars to look back
+sr_min_touches: 2  # Minimum touches to confirm level
+
+# Candlestick patterns
+detect_patterns: true
+min_pattern_confidence: 0.6
+
+# Breakout detection
+breakout_confirmation: true
+breakout_lookback: 5
+
+
+# ════════════════════════════════════════════════════════════
+# SMART MONEY CONCEPTS PARAMETERS
+# ════════════════════════════════════════════════════════════
+
+# Break of Structure (BOS)
+detect_bos: true
+bos_lookback: 20
+
+# Change of Character (CHoCH)
+detect_choch: true
+choch_lookback: 20
+
+# Fair Value Gap (FVG)
+detect_fvg: true
+fvg_min_size_pips: 5
+
+# Order Blocks
+detect_ob: true
+ob_lookback: 10
+
+# Liquidity sweeps
+detect_liquidity: true
+liquidity_threshold: 0.5
+
+# Premium/Discount zones
+detect_zones: true
+zone_lookback: 50
+
+
+# ════════════════════════════════════════════════════════════
+# ADVANCED SETTINGS
+# ════════════════════════════════════════════════════════════
+
+# Enable caching
+cache_enabled: true
+cache_ttl: 300  # Cache for 5 minutes
+
+# Enable backtesting mode
+backtest_mode: false
+backtest_start_date: "2024-01-01"
+backtest_end_date: "2024-12-31"
+
+# Parallel execution
+enable_parallel_agents: true
+max_parallel_tasks: 3
+
+# Timezone for session times
+timezone: "UTC"
+
+# Discord/Telegram notifications (optional)
+notifications_enabled: false
+discord_webhook: ""
+telegram_bot_token: ""
+telegram_chat_id: ""
