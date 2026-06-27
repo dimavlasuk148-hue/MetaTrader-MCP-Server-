@@ -44,3 +44,6 @@ Thumbs.db
 /tests/reports/*.md
 
 .pypirc
+
+# GitHub Actions workflow files (GitHub App lacks `workflows` permission)
+.github/workflows/
