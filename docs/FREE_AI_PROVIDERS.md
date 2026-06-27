@@ -2,7 +2,7 @@
 
 System now uses **100% FREE AI providers** with no credit card required for core functionality.
 
-## 4 FREE Options
+## 3 FREE Options (+ HuggingFace)
 
 ### 1. Ollama (Recommended - 100% Local & Free)
 
@@ -70,34 +70,39 @@ echo "GROQ_API_KEY=gsk_xxx" >> .env
 
 ---
 
-### 3. Together AI (FREE Tier + $1 credit/month)
+### 3. OpenRouter (FREE $5 Credit - 200+ Models)
 
-**Cost:** FREE ($1 monthly credit)
+**Cost:** FREE ($5 initial credit, no credit card needed)
 
 **Setup:**
 ```bash
-# 1. Signup: https://www.together.ai
-# 2. Create API key
+# 1. Signup: https://openrouter.ai (no credit card!)
+# 2. Copy API key
 # 3. Set environment variable
 
-export TOGETHER_API_KEY="xxx"
+# Windows (PowerShell)
+$env:OPENROUTER_API_KEY = "sk-or-xxx"
+
+# Linux/Mac
+export OPENROUTER_API_KEY="sk-or-xxx"
 
 # Or in .env
-echo "TOGETHER_API_KEY=xxx" >> .env
+echo "OPENROUTER_API_KEY=sk-or-xxx" >> .env
 ```
 
 **Advantages:**
-- Free tier with $1 monthly credit
-- Good model selection
-- Reasonable rate limits
-- No credit card needed (for free tier)
+- $5 free credit (no credit card required!)
+- Access to 200+ models
+- Very flexible and powerful
+- Good rate limits on free tier
+- Easy to upgrade later with payment
 
 **Disadvantages:**
 - Requires internet
-- Limited to Together's models
-- Need to manage monthly credit
+- Credit limited ($5 free)
+- Will need payment for production use
 
-**Get started:** https://www.together.ai
+**Get started:** https://openrouter.ai
 
 ---
 

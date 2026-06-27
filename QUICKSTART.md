@@ -53,12 +53,15 @@ export GROQ_API_KEY="gsk_xxx"
 echo "GROQ_API_KEY=gsk_xxx" >> .env
 ```
 
-#### Option 2C: Together AI (FREE Cloud - \$1 credit/month)
+#### Option 2C: OpenRouter (FREE Cloud - $5 Credit, 200+ Models)
 ```bash
-# 1. Signup: https://www.together.ai (no credit card)
-# 2. Get API key
+# 1. Signup: https://openrouter.ai (no credit card)
+# 2. Get API key from dashboard
 # 3. Set environment variable:
-export TOGETHER_API_KEY="xxx"
+export OPENROUTER_API_KEY="sk-or-xxx"
+
+# Or add to .env
+echo "OPENROUTER_API_KEY=sk-or-xxx" >> .env
 ```
 
 ### Setup (5 minutes - Fully Automatic)
@@ -98,7 +101,7 @@ EOF
 ```
 
 **What happens automatically:**
-1. System detects available FREE AI providers (Ollama, Groq, Together, HF)
+1. System detects available FREE AI providers (Ollama, Groq, OpenRouter, HF)
 2. Launches Ollama if you're using local (and it's installed)
 3. Verifies API keys for cloud providers
 4. Selects best provider (prefers local Ollama first)
@@ -179,7 +182,7 @@ ollama serve
 Choose one and setup (5 min):
 - **Ollama:** https://ollama.ai (then `ollama serve`)
 - **Groq:** https://console.groq.com (then `export GROQ_API_KEY=...`)
-- **Together:** https://www.together.ai (then `export TOGETHER_API_KEY=...`)
+- **OpenRouter:** https://openrouter.ai (then `export OPENROUTER_API_KEY=...`)
 
 ### Ollama not detected
 ```bash

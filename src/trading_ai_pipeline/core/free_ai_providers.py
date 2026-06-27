@@ -4,11 +4,10 @@ Free AI Providers Management System
 Auto-discovers and initializes only FREE AI providers:
 1. Ollama (local, open-source, 100% free)
 2. Groq API (free tier with generous limits)
-3. Together AI (free tier with credits)
+3. OpenRouter (free tier with $5 credit, supports 200+ models)
 4. Hugging Face Inference (free tier)
-5. Local LLama.cpp (open-source, free)
 
-No API fees, no credit card required for core functionality.
+No credit card required for core functionality.
 """
 import asyncio
 import logging
@@ -42,14 +41,14 @@ class FreeAIProviderManager:
             "description": "Fast inference, free tier, no credit card",
             "signup": "https://console.groq.com",
         },
-        "together": {
+        "openrouter": {
             "type": "cloud",
-            "url": "https://api.together.xyz/v1",
-            "default_model": "meta-llama/Llama-2-70b-chat-hf",
-            "env_key": "TOGETHER_API_KEY",
-            "cost": "FREE ($1 credit/month)",
-            "description": "Free tier with monthly credits",
-            "signup": "https://www.together.ai",
+            "url": "https://openrouter.ai/api/v1",
+            "default_model": "meta-llama/llama-2-70b-chat",
+            "env_key": "OPENROUTER_API_KEY",
+            "cost": "FREE ($5 credit, 200+ models)",
+            "description": "Supports 200+ models, free $5 credit, no credit card",
+            "signup": "https://openrouter.ai",
         },
         "huggingface": {
             "type": "cloud",
@@ -89,9 +88,9 @@ class FreeAIProviderManager:
             return False, (
                 "No FREE AI providers detected.\n"
                 "Quick setup:\n"
-                "  1. Ollama: https://ollama.ai\n"
-                "  2. Groq: https://console.groq.com (get free API key)\n"
-                "  3. Together: https://www.together.ai (get free credits)"
+                "  1. Ollama: https://ollama.ai (local, no internet)\n"
+                "  2. Groq: https://console.groq.com (free API key)\n"
+                "  3. OpenRouter: https://openrouter.ai (free $5 credit)"
             )
 
         # Select primary provider (prefer local Ollama, then free cloud)
