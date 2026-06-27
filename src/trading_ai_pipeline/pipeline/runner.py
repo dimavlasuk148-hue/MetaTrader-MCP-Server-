@@ -13,7 +13,7 @@ from typing import Optional
 
 from trading_ai_pipeline.core.config.settings import PipelineConfig, load_config
 from trading_ai_pipeline.core.types.pipeline_context import PipelineStatus
-from trading_ai_pipeline.core.ollama_manager import ensure_ollama_running, ensure_model_available
+from trading_ai_pipeline.core.ai_providers_manager import get_ai_provider_manager, get_all_ai_providers
 from trading_ai_pipeline.logger.pipeline_logger import PipelineLogger
 from trading_ai_pipeline.memory.trade_memory import TradeMemory
 from trading_ai_pipeline.pipeline.orchestrator import PipelineOrchestrator
@@ -124,40 +124,63 @@ class PipelineRunner:
 async def main(config_path: Optional[str] = None) -> None:
     config = load_config(config_path)
 
-    # ---- Auto-setup Ollama (if using local Ollama) ----
-    if config.ai.provider == "ollama":
-        print("[*] Checking Ollama availability...")
-        success, msg = ensure_ollama_running(
-            base_url=config.ai.base_url,
-            auto_launch=config.ai.auto_launch,
-        )
-        if not success:
-            print(f"[!] ERROR: {msg}")
-            print("[!] Please install Ollama from https://ollama.ai")
-            return
-        print(f"[+] {msg}")
+    # ---- Auto-setup ALL 5 AI providers ----
+    print("\n" + "="*70)
+    print("AUTOMATED AI PROVIDER DETECTION & SETUP")
+    print("="*70 + "\n")
 
-        # Auto-pull model if needed
-        success, msg = ensure_model_available(
-            model=config.ai.model,
-            base_url=config.ai.base_url,
-            auto_pull=config.ai.auto_pull_model,
-        )
-        if not success:
-            print(f"[!] WARNING: {msg}")
-            print(f"[!] To manually pull model: ollama pull {config.ai.model}")
-        else:
-            print(f"[+] {msg}")
+    try:
+        ai_manager = await get_ai_provider_manager()
+        available = get_all_ai_providers()
 
-    # ---- Import and setup MT5 client ----
+        print(f"[+] Successfully initialized {len(available)} AI provider(s):")
+        for provider in available:
+            print(f"    ✓ {provider}")
+
+        active = ai_manager.active_provider
+        print(f"\n[+] Primary provider: {active.upper()}")
+        print("="*70 + "\n")
+
+    except Exception as e:
+        print(f"[!] ERROR setting up AI providers: {e}")
+        print("[!] Make sure:")
+        print("    - Ollama is installed (https://ollama.ai)")
+        print("    - Environment variables are set for cloud APIs (OPENAI_API_KEY, etc)")
+        return
+
+    # ---- Auto-setup MT5 ----
+    print("[*] Setting up MetaTrader 5 connection...")
     from metatrader_client import MetaTraderClient
     from metatrader_client.connection.config import ConnectionConfig
 
     connection_cfg = ConnectionConfig(
         host=config.mt5.host,
         port=config.mt5.port,
+        auto_launch=True,
     )
     mt5_client = MetaTraderClient(connection_cfg)
+
+    try:
+        # This will auto-launch MT5 if needed
+        print("[*] Connecting to MT5...")
+        await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: mt5_client.connect(
+                login=config.mt5.login,
+                password=config.mt5.password,
+                server=config.mt5.server,
+            )
+        )
+        print("[+] Connected to MT5")
+    except Exception as e:
+        print(f"[!] MT5 Connection Error: {e}")
+        print(f"[!] Please check your MT5 credentials in config file")
+        return
+
+    # ---- Start Pipeline ----
+    print("\n" + "="*70)
+    print("STARTING TRADING PIPELINE")
+    print("="*70 + "\n")
 
     runner = PipelineRunner(config=config, mt5_client=mt5_client)
     await runner.start()

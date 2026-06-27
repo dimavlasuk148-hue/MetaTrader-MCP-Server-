@@ -35,6 +35,7 @@ class AgentConfig(BaseModel):
     max_retries: int = 3
     retry_delay_seconds: float = 2.0
     system_prompt_extra: str = ""  # appended to base system prompt
+    auto_detect_provider: bool = True  # Auto-detect best available provider
 
 
 class AgentResponse(BaseModel, Generic[T]):
@@ -63,6 +64,27 @@ class BaseAgent(ABC, Generic[T]):
     def __init__(self, config: AgentConfig):
         self.config = config
         self._client = httpx.Client(timeout=config.timeout_seconds)
+        
+        # Auto-detect and setup AI provider if enabled
+        if config.auto_detect_provider:
+            self._setup_provider()
+
+    def _setup_provider(self):
+        """Auto-detect and setup the best available AI provider."""
+        try:
+            from trading_ai_pipeline.core.ai_providers_manager import (
+                get_ai_provider_manager,
+                get_active_ai_provider,
+                get_all_ai_providers,
+            )
+
+            # Get the active provider and its config
+            active = get_active_ai_provider()
+            if active and active != "unknown":
+                self.config.model = self.config.model or "auto"
+                logger.info(f"Agent using AI provider: {active}")
+        except Exception as e:
+            logger.warning(f"Could not auto-detect provider: {e}. Using defaults.")
 
     @property
     @abstractmethod

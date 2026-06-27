@@ -98,6 +98,10 @@ class PipelineConfig(BaseModel):
     consensus: ConsensusConfig = Field(default_factory=ConsensusConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
+    
+    # Pipeline execution
+    dry_run: bool = True
+    pipeline_interval_seconds: int = 3600  # Run every hour
     dry_run: bool = True              # No real orders when True
     pipeline_interval_seconds: int = 60
 
