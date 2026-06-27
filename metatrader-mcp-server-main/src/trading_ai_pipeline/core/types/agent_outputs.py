@@ -1,9 +1,10 @@
 """
-Agent output type definitions.
+Agent output Pydantic models — canonical version used by the full pipeline.
 
-These are the structured JSON outputs each AI agent must return.
-Every agent returns arguments (metrics + interpretation), never raw "buy/sell".
+Every step of the pipeline returns a strongly-typed output object.
+Python calculations are deterministic; AI outputs are validated here.
 """
+from __future__ import annotations
 
 from enum import Enum
 from typing import Dict, List, Optional
@@ -12,9 +13,9 @@ from pydantic import BaseModel, Field
 
 
 class TradeDirection(str, Enum):
-    BUY = "buy"
-    SELL = "sell"
-    NO_TRADE = "no_trade"
+    BUY = "BUY"
+    SELL = "SELL"
+    NO_TRADE = "NO_TRADE"
 
 
 class NoTradeReason(str, Enum):
@@ -315,3 +316,205 @@ class TradeDecision(BaseModel):
 
     pipeline_id: str = ""    # unique ID for this analysis run
     decision_summary: Dict[str, str] = Field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# Pipeline-native types (used by orchestrator, consensus, risk, validator)
+# ---------------------------------------------------------------------------
+
+class SignalStrength(str, Enum):
+    STRONG = "STRONG"
+    MODERATE = "MODERATE"
+    WEAK = "WEAK"
+    NO_SIGNAL = "NO_SIGNAL"
+
+
+class TrendState(str, Enum):
+    UPTREND = "UPTREND"
+    DOWNTREND = "DOWNTREND"
+    RANGING = "RANGING"
+    UNCERTAIN = "UNCERTAIN"
+
+
+class EMAAlignment(str, Enum):
+    BULLISH = "BULLISH"
+    BEARISH = "BEARISH"
+    MIXED = "MIXED"
+    FLAT = "FLAT"
+
+
+class MACDSignal(str, Enum):
+    BULLISH_CROSS = "BULLISH_CROSS"
+    BEARISH_CROSS = "BEARISH_CROSS"
+    BULLISH_DIVERGENCE = "BULLISH_DIVERGENCE"
+    BEARISH_DIVERGENCE = "BEARISH_DIVERGENCE"
+    ABOVE_ZERO = "ABOVE_ZERO"
+    BELOW_ZERO = "BELOW_ZERO"
+    NEUTRAL = "NEUTRAL"
+
+
+class RSIZone(str, Enum):
+    OVERBOUGHT = "OVERBOUGHT"
+    BULLISH = "BULLISH"
+    NEUTRAL = "NEUTRAL"
+    BEARISH = "BEARISH"
+    OVERSOLD = "OVERSOLD"
+
+
+class BreakoutType(str, Enum):
+    RESISTANCE_BREAK = "RESISTANCE_BREAK"
+    SUPPORT_BREAK = "SUPPORT_BREAK"
+    RANGE_BREAK_UP = "RANGE_BREAK_UP"
+    RANGE_BREAK_DOWN = "RANGE_BREAK_DOWN"
+    FALSE_BREAK = "FALSE_BREAK"
+    NONE = "NONE"
+
+
+# Step 2 — typed output used by technical_agent.py
+class TechnicalAnalysisOutput(BaseModel):
+    trend_direction: TradeDirection
+    trend_state: TrendState = TrendState.UNCERTAIN
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    ema_alignment: EMAAlignment = EMAAlignment.MIXED
+    price_above_ema20: Optional[bool] = None
+    price_above_ema50: Optional[bool] = None
+    price_above_ema200: Optional[bool] = None
+    rsi_value: Optional[float] = None
+    rsi_zone: Optional[RSIZone] = None
+    rsi_divergence: Optional[str] = None
+    macd_signal: MACDSignal = MACDSignal.NEUTRAL
+    macd_histogram: Optional[float] = None
+    adx_value: Optional[float] = None
+    trend_strength: Optional[str] = None
+    atr_value: Optional[float] = None
+    volatility_state: Optional[str] = None
+    bb_position: Optional[str] = None
+    bb_squeeze: Optional[bool] = None
+    price_above_vwap: Optional[bool] = None
+    reasoning: str = ""
+    key_factors: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+# Step 3 — typed output used by price_action_agent.py
+class PriceActionOutput(BaseModel):
+    bias: TradeDirection
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    primary_pattern: Optional[str] = None
+    secondary_patterns: List[str] = Field(default_factory=list)
+    key_level_type: Optional[str] = None
+    nearest_support: Optional[float] = None
+    nearest_resistance: Optional[float] = None
+    key_level_distance_pips: Optional[float] = None
+    breakout_type: BreakoutType = BreakoutType.NONE
+    breakout_confirmed: bool = False
+    rejection_at_level: bool = False
+    momentum_direction: Optional[str] = None
+    momentum_strength: Optional[str] = None
+    htf_trend: Optional[TradeDirection] = None
+    htf_confluence: bool = False
+    reasoning: str = ""
+    key_factors: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+# Step 4 — typed output used by smart_money_agent.py
+class SmartMoneyOutput(BaseModel):
+    market_bias: TradeDirection
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    bos_detected: bool = False
+    choch_detected: bool = False
+    structure_direction: Optional[str] = None
+    liquidity_sweep: bool = False
+    liquidity_side: Optional[str] = None
+    equal_highs: bool = False
+    equal_lows: bool = False
+    fvg_detected: bool = False
+    fvg_direction: Optional[str] = None
+    fvg_price_low: Optional[float] = None
+    fvg_price_high: Optional[float] = None
+    order_block_detected: bool = False
+    order_block_direction: Optional[str] = None
+    order_block_price: Optional[float] = None
+    order_block_strength: Optional[str] = None
+    in_premium_zone: Optional[bool] = None
+    in_discount_zone: Optional[bool] = None
+    equilibrium_price: Optional[float] = None
+    reasoning: str = ""
+    key_factors: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+# Step 5 — consensus builder output
+class ConsensusOutput(BaseModel):
+    direction: TradeDirection
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    signal_strength: SignalStrength = SignalStrength.NO_SIGNAL
+    agreement_count: int = 0
+    total_agents: int = 3
+    conflicts: List[str] = Field(default_factory=list)
+    proceed: bool = False
+    technical_weight: float = 0.35
+    price_action_weight: float = 0.30
+    smart_money_weight: float = 0.35
+    technical_direction: TradeDirection = TradeDirection.NO_TRADE
+    price_action_direction: TradeDirection = TradeDirection.NO_TRADE
+    smart_money_direction: TradeDirection = TradeDirection.NO_TRADE
+    technical_confidence: float = 0.0
+    price_action_confidence: float = 0.0
+    smart_money_confidence: float = 0.0
+    rejection_reason: Optional[str] = None
+
+
+# Step 6 — reviewer output
+class ReviewerOutput(BaseModel):
+    veto: bool = False
+    veto_reason: Optional[str] = None
+    concerns: List[str] = Field(default_factory=list)
+    supporting_factors: List[str] = Field(default_factory=list)
+    spread_concern: bool = False
+    news_concern: bool = False
+    volatility_concern: bool = False
+    liquidity_concern: bool = False
+    counter_trend_concern: bool = False
+    proceed_confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    reasoning: str = ""
+
+
+# Step 7 — probability estimator output
+class ProbabilityOutput(BaseModel):
+    buy_probability: float = Field(default=0.0, ge=0.0, le=1.0)
+    sell_probability: float = Field(default=0.0, ge=0.0, le=1.0)
+    no_trade_probability: float = Field(default=1.0, ge=0.0, le=1.0)
+    recommended_direction: TradeDirection = TradeDirection.NO_TRADE
+    base_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    final_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    adjusted: bool = False
+    adjustments: List[str] = Field(default_factory=list)
+    proceed: bool = False
+
+
+# Step 8 — risk manager output
+class RiskOutput(BaseModel):
+    approved: bool = False
+    rejection_reason: Optional[str] = None
+    entry_price: Optional[float] = None
+    stop_loss: Optional[float] = None
+    take_profit: Optional[float] = None
+    position_size_lots: Optional[float] = None
+    risk_amount: Optional[float] = None
+    risk_percent: Optional[float] = None
+    rr_ratio: Optional[float] = None
+    spread_points: Optional[int] = None
+    spread_ok: Optional[bool] = None
+    sl_distance_atr: Optional[float] = None
+    tp_distance_atr: Optional[float] = None
+
+
+# Step 9 — validator output
+class ValidatorOutput(BaseModel):
+    approved: bool = False
+    violations: List[str] = Field(default_factory=list)
+    passed_rules: List[str] = Field(default_factory=list)
+    total_rules: int = 0
+    rejection_reason: Optional[str] = None

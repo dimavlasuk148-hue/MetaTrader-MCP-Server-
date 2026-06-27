@@ -33,6 +33,8 @@ class PipelineStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
+    TRADE_EXECUTED = "trade_executed"
+    NO_TRADE = "no_trade"
     ABORTED = "aborted"
     ERROR = "error"
 
@@ -66,10 +68,23 @@ class PipelineContext(BaseModel):
     symbol: str = ""
     timeframe: str = ""
 
+    # Runtime metadata (set by the orchestrator/runner)
+    dry_run: bool = True
+    duration_ms: Optional[int] = None
+    started_at: Optional[str] = None    # ISO string set at run start
+    finished_at: Optional[str] = None   # ISO string set at run end
+
     # Pipeline state
     status: PipelineStatus = PipelineStatus.PENDING
     current_step: int = 0
     abort_reason: Optional[str] = None
+    rejection_reason: Optional[str] = None  # NO_TRADE reason
+    error: Optional[str] = None             # ERROR reason
+
+    @property
+    def run_id(self) -> str:
+        """Alias for pipeline_id used by orchestrator and logger."""
+        return self.pipeline_id
 
     # ── Step 1: Market Data ──────────────────────────────
     market_snapshot: Optional[MarketSnapshot] = None
@@ -78,38 +93,51 @@ class PipelineContext(BaseModel):
     indicators: Optional[IndicatorBundle] = None
     price_action_data: Optional[PriceActionBundle] = None
     smart_money_data: Optional[SmartMoneyBundle] = None
+    # Alias used by orchestrator
+    smc_data: Optional[Any] = None
 
     # ── Step 2: Technical Analyst AI ────────────────────
     technical_analysis: Optional[TechnicalAnalysis] = None
+    # Pipeline-native typed output (used by orchestrator)
+    technical_output: Optional[Any] = None
 
     # ── Step 3: Price Action Analyst AI ─────────────────
     price_action_analysis: Optional[PriceActionAnalysis] = None
+    price_action_output: Optional[Any] = None
 
     # ── Step 4: Smart Money Analyst AI ──────────────────
     smart_money_analysis: Optional[SmartMoneyAnalysis] = None
+    smart_money_output: Optional[Any] = None
 
     # ── Step 5: Consensus Builder (deterministic) ───────
-    consensus: Optional[ConsensusResult] = None
+    consensus: Optional[Any] = None
 
     # ── Step 6: Reviewer AI ─────────────────────────────
     reviewer_verdict: Optional[ReviewerVerdict] = None
+    reviewer_output: Optional[Any] = None
 
     # ── Step 7: Probability Estimator AI ────────────────
-    probability: Optional[ProbabilityEstimate] = None
+    probability: Optional[Any] = None
 
     # ── Step 8: Risk Manager (deterministic) ────────────
     risk_parameters: Optional[RiskParameters] = None
+    risk_output: Optional[Any] = None
 
     # ── Step 9: Rule Validator (deterministic) ──────────
     validation: Optional[ValidationResult] = None
+    validator_output: Optional[Any] = None
 
     # ── Step 10: Trade Decision ──────────────────────────
     trade_decision: Optional[TradeDecision] = None
+    execution_result: Optional[Any] = None
 
     # ── Step 11: Execution Result ────────────────────────
     execution_ticket: Optional[int] = None
     execution_error: Optional[str] = None
     executed_at: Optional[datetime] = None
+
+    # ── Step 1: Market data (orchestrator alias) ─────────
+    market_data: Optional[Any] = None
 
     # ── Audit trail ──────────────────────────────────────
     step_logs: List[StepLog] = Field(default_factory=list)
